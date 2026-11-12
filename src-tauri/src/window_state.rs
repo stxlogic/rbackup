@@ -118,6 +118,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .find(|config| config.label == "main")
         .ok_or("Main window configuration is missing")?;
     let window = WebviewWindowBuilder::from_config(app, config)?
+        .icon(tauri::include_image!("./icons/128x128.png"))?
         .inner_size(geometry.width, geometry.height)
         .maximized(false)
         .visible(false)

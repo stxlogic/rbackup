@@ -244,7 +244,7 @@ function App() {
   const policyKey = JSON.stringify([active, profile.repository, policy]);
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark">◈</span><div>rbackup<span>Backup Manager for Restic</span></div></div>
+      <div className="brand"><img className="brand-mark" src="/rbackup.svg" alt="" width="40" height="40" /><div>rbackup<span>Backup Manager for Restic</span></div></div>
       <div className="nav-label">WORKSPACE</div>
       <nav aria-label="Main navigation">{["Overview", "Repository", "Backup", "Snapshots", "Maintenance"].map((name, i) => <button key={name} className={tab === name ? "nav-item active" : "nav-item"} onClick={() => { setTab(name); setQuery(""); }} aria-current={tab === name ? "page" : undefined}><span aria-hidden="true">{["◫", "▣", "↑", "◷", "⚙"][i]}</span>{name}</button>)}</nav>
       <div className="sidebar-bottom"><span className="dot" /> Local desktop workspace<p>Encrypted backups.<br />Recovery you control.</p><button className="text-button" disabled={!!busy || listing || mountBusy} onClick={() => void run("version")}>Check restic version ↗</button></div>

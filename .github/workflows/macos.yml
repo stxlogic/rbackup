@@ -4,17 +4,18 @@ on:
   pull_request:
   push:
   workflow_dispatch:
+    inputs:
+      apple_silicon:
+        description: Run on Apple Silicon
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [macos-15, macos-15-intel]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ inputs.apple_silicon && 'macos-15' || 'macos-15-intel' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6

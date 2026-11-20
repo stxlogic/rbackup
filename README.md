@@ -73,7 +73,7 @@ The app bundle and disk image are under `src-tauri/target/release/bundle/`. Inst
 
 To check an installed build, open rbackup from Finder, select **Check restic version**, then preview a backup, create a snapshot, and restore a file using a disposable local repository.
 
-The [macOS GitHub Actions workflow](.github/workflows/macos.yml) runs the frontend and Rust tests, including disposable headless backups, and builds unsigned debug app bundles and disk images on Apple Silicon and Intel. Public DMGs require Developer ID signing and notarization. See [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/).
+The [macOS GitHub Actions workflow](.github/workflows/macos.yml) runs tests and builds unsigned debug app bundles and disk images on Intel for pushes and pull requests. For an Apple Silicon check, select **Run on Apple Silicon** when starting the workflow manually. Public DMGs require Developer ID signing and notarization. See [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/).
 
 ## Workflow
 

@@ -79,8 +79,36 @@
 /* Clip the entire viewport, including the fixed sidebar, to transparent bottom corners. */
 :root, :root[data-theme="dark"] { background: transparent; }
 body { overflow: hidden; }
-#root { height: 100dvh; overflow: auto; background: #f5f5f5; clip-path: inset(0 round 0 0 12px 12px); }
+#root { height: 100dvh; overflow: hidden; background: #f5f5f5; clip-path: inset(0 round 0 0 12px 12px); }
 :root[data-theme="dark"] #root { background: #191919; }
+.app-shell > main {
+  --workspace-left: 42px;
+  --workspace-right: 42px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-inline: 0;
+}
+.app-shell > main > header {
+  flex-shrink: 0;
+  margin-left: var(--workspace-left);
+  margin-right: var(--workspace-right);
+}
+.main-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none;
+  padding-left: var(--workspace-left);
+  padding-right: calc(var(--workspace-right) + 11px);
+  scroll-padding: 5px;
+  margin-bottom: 10px;
+}
+.main-content::-webkit-scrollbar { display: none; }
+.main-content:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+@media (max-width: 1050px) {
+  .app-shell > main { --workspace-left: 24px; --workspace-right: 24px; }
+}
 
 /* A dedicated, keyboard-accessible snapshot workspace, separate from history. */
 .snapshot-browser { width: min(1400px, 96vw); height: min(1000px, 94dvh); max-width: 96vw; max-height: 94dvh; padding: 0; border: 1px solid #aaa; border-radius: 12px; color: #303030; background: #f5f5f5; }
@@ -146,7 +174,13 @@ button:not(.workflow):not(.tree-name) { white-space: nowrap; }
 @media (max-width: 720px) {
   #root { clip-path: none; }
   .desktop-sidebar { display: none; }
-  .app-shell main { min-width: 0; padding-top: env(safe-area-inset-top, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+  .app-shell > main {
+    --workspace-left: max(16px, env(safe-area-inset-left, 0px));
+    --workspace-right: max(16px, env(safe-area-inset-right, 0px));
+    min-width: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
   .app-shell main > header { gap: 12px; padding: 12px 0; }
   .menu-toggle { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; padding: 10px; }
   .header-controls { width: 100%; justify-content: space-between; }

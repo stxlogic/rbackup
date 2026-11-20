@@ -75,7 +75,13 @@ To check an installed build, open rbackup from Finder, select **Check restic ver
 
 The [macOS GitHub Actions workflow](.github/workflows/macos.yml) runs tests and builds unsigned debug app bundles and disk images on Intel for pushes and pull requests. For an Apple Silicon check, select **Run on Apple Silicon** when starting the workflow manually. Public DMGs require Developer ID signing and notarization. See [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/).
 
+## Draft GitHub releases
+
+Push a version tag such as `rbackup-0.1.2` or `v0.1.2` that matches the version in the tagged commit. In GitHub, open **Actions → Draft desktop release → Run workflow** and enter that tag. The [release workflow](.github/workflows/release.yml) builds a Linux Debian package, a Windows NSIS installer, and an unsigned universal macOS DMG. After all three builds succeed, it attaches the installers to a draft GitHub Release with generated notes. Review the draft before publishing and sign and notarize the macOS bundle for public distribution.
+
 ## Workflow
+
+The header stays visible while the workspace below it scrolls. Tab to **Workspace content** to scroll with the keyboard.
 
 1. Open **Repository**, enter the repository location, and supply a session password or an absolute password-file path. Select **Connect**. If restic reports that the location has no repository, **Initialize new repository** becomes available. This detection requires restic 0.17.0 or newer.
 2. Open **Backup**, enter absolute source paths (one per line), optional excludes and tags. Preview with dry run, then uncheck dry run to create a snapshot.
@@ -211,7 +217,7 @@ In **Maintenance → Automatic maintenance**, enable **After each successful bac
 
 After a successful manual or scheduled backup, the app runs `restic check`, then `restic forget` with the saved automatic retention policy, then `restic prune`. This policy is separate from the manual retention preview controls. Automatic retention deletes snapshots outside the policy and pruning reclaims their unreferenced data. At least one retention count must be positive; invalid policies stop the operation before backup begins. Check uses metadata validation unless reading all data is enabled.
 
-Restic can continue past unreadable files and save a partial snapshot of the readable data. An incomplete backup (exit 3) shows a warning with details in the operation or scheduled-run output. Dry runs, failed backups, incomplete backups, and cancelled backups skip maintenance. A failed or cancelled maintenance step stops all later steps. Backup and maintenance share the operation lock and cancellation handling. Results and output include maintenance; a maintenance failure does not undo the completed backup. Scheduled maintenance runs in the same headless job as the backup, using its saved password file on Linux and Windows.
+Restic can continue past unreadable files and save a partial snapshot of the readable data. An incomplete backup (exit 3) shows a warning with details in the operation or scheduled-run output. Dry runs, failed backups, incomplete backups, and cancelled backups skip maintenance. A failed or cancelled maintenance step stops all later steps. Backup and maintenance share the operation lock and cancellation handling. Results and output include maintenance; a maintenance failure does not undo the completed backup. Scheduled maintenance runs in the same headless job as the backup, using its saved password file on Linux, macOS, and Windows.
 
 ## Scheduled backups on macOS
 

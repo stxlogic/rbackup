@@ -60,6 +60,7 @@ function App() {
     const [tab, setTab] = useState(profile.repository ? "Overview" : "Repository");
     const mobileMenu = useRef<HTMLDialogElement>(null);
     const pageHeading = useRef<HTMLHeadingElement>(null);
+    const mainContent = useRef<HTMLDivElement>(null);
     const [menuOpen, setMenuOpen] = useState(false);
     useEffect(() => {
         const phone = window.matchMedia("(max-width: 720px)");
@@ -71,7 +72,7 @@ function App() {
         setTab(name); setQuery(""); mobileMenu.current?.close();
         requestAnimationFrame(() => {
             pageHeading.current?.focus({ preventScroll: true });
-            document.getElementById("root")?.scrollTo({ top: 0 });
+            mainContent.current?.scrollTo({ top: 0 });
         });
     }
     const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -390,6 +391,7 @@ function App() {
         <main>
             <header><div className="header-navigation"><button className="menu-toggle" aria-label="Open navigation" aria-haspopup="dialog" aria-controls="mobile-navigation" aria-expanded={menuOpen}
                 onClick={() => { mobileMenu.current?.showModal(); setMenuOpen(true); }}><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg></button><div className="breadcrumb">Workspace <span>/</span> {tab}</div></div><div className="header-controls"><label className="theme-control">Theme<select value={theme} onChange={e => setTheme(e.target.value as Theme)}><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div role="status" className={`connection status-${connected ? "success" : "warning"}`}><span className="dot" aria-hidden="true" />{connected ? "Repository connected" : "Not connected"}</div></div></header>
+            <div className="main-content" ref={mainContent} role="region" aria-label="Workspace content" tabIndex={0}>
             <div className="page-heading"><div>
                 {/* <div className="eyebrow">YOUR DATA, PROTECTED</div> */}
                 <h1 ref={pageHeading} tabIndex={-1}>{tab === "Overview" ? "Backup overview" : tab}</h1>
@@ -409,7 +411,7 @@ function App() {
             <fieldset disabled={!!busy || listing || mountBusy} className="workspace">
                 {tab === "Overview" && <>
                     <div className="metrics"><article><span>AVAILABLE SNAPSHOTS</span><strong>{connected ? snapshots.length : "—"}</strong><small>{connected ? "In this repository" : "Connect to load snapshots"}</small></article><article><span>LATEST BACKUP</span><strong className="date-value">{snapshots.length ? new Date([...snapshots].sort((a, b) => b.time.localeCompare(a.time))[0].time).toLocaleDateString() : "—"}</strong><small>{snapshots.length ? "Most recent snapshot" : "No snapshot loaded"}</small></article><article><span>RESTORE SIZE</span><strong>{stats ? size(stats.total_size) : "—"}</strong><small>{stats ? `${stats.total_file_count ?? 0} files (all snapshots)` : "Load statistics below"}</small></article></div>
-                    <div className="columns"><section className="card"><div className="card-heading"><h2>Your backup workflow</h2><span className="badge">RESTIC POWERED</span></div>{[["01", "Connect a repository", "Set your storage location and unlock credentials.", "Repository"], ["02", "Create a snapshot", "Back up files with tags and exclusion patterns.", "Backup"], ["03", "Test your recovery", "Browse snapshots and restore into a new folder.", "Snapshots"]].map(([n, title, description, destination]) => <button className="workflow" key={n} onClick={() => setTab(destination)}><span className="step">{n}</span><div><strong>{title}</strong><p>{description}</p></div><span>→</span></button>)}</section><section className="card"><h2>Repository health</h2><p>Check the repository structure regularly, and run a full data check when you need deeper verification.</p><button onClick={() => void run("check")}>Run integrity check</button><button onClick={async () => { const r = await run("stats"); if (r) { try { setStats(JSON.parse(r.stdout)); } catch { setNoticeTone("error"); setNotice("Could not parse repository statistics."); } } }}>Load statistics</button><div className="tip">Keep your repository password somewhere safe. A backup is useful only if you can restore it.</div></section></div>
+                    <div className="columns"><section className="card"><div className="card-heading"><h2>Your backup workflow</h2><span className="badge">RESTIC POWERED</span></div>{[["01", "Connect a repository", "Set your storage location and unlock credentials.", "Repository"], ["02", "Create a snapshot", "Back up files with tags and exclusion patterns.", "Backup"], ["03", "Test your recovery", "Browse snapshots and restore into a new folder.", "Snapshots"]].map(([n, title, description, destination]) => <button className="workflow" key={n} onClick={() => navigate(destination)}><span className="step">{n}</span><div><strong>{title}</strong><p>{description}</p></div><span>→</span></button>)}</section><section className="card"><h2>Repository health</h2><p>Check the repository structure regularly, and run a full data check when you need deeper verification.</p><button onClick={() => void run("check")}>Run integrity check</button><button onClick={async () => { const r = await run("stats"); if (r) { try { setStats(JSON.parse(r.stdout)); } catch { setNoticeTone("error"); setNotice("Could not parse repository statistics."); } } }}>Load statistics</button><div className="tip">Keep your repository password somewhere safe. A backup is useful only if you can restore it.</div></section></div>
                 </>}
                 {tab === "Repository" && <section className="card form-card"><h2>Repository settings</h2><p>Profile settings save automatically on this device. Typed passwords stay in memory unless you explicitly create a password file.</p>{profile.repository.startsWith("sftp:") && <p className="banner">SFTP uses SSH authentication separately from the repository encryption password. Configure an SSH key or agent and verify the server’s host key outside the app. Connections run without password or host-trust prompts.</p>}<label>Profile name<input value={profile.name} onChange={e => update("name", e.target.value)} /></label><label>Repository location<input placeholder="/mnt/backups/restic or sftp:user@host:/backup" value={profile.repository} onChange={e => update("repository", e.target.value)} spellCheck={false} /></label><RcloneSetup key={`rclone:${profile.id}`} useLocation={location => update("repository", location)} /><S3Setup key={`s3:${profile.id}`} useLocation={location => update("repository", location)} /><div className="form-grid"><label>Session password<input type="password" autoComplete="off" value={password} onChange={e => { setPassword(e.target.value); setRepositoryMissing(false); setPreview(""); }} /></label><label>Password file (takes priority)<input placeholder="Created automatically, or enter an existing file" value={profile.passwordFile} onChange={e => update("passwordFile", e.target.value)} /></label></div><button disabled={!password} onClick={() => void createPasswordFile()}>Create password file</button><p>Save the session password to a private file and use it for this profile. Existing files are never overwritten.</p><p>Use an absolute local path or a restic backend URL. Remote storage credentials are inherited from the app’s environment. URLs, paths and profile settings are stored unencrypted; avoid embedding credentials in a repository URL.</p><div className="actions"><button className="primary" disabled={!profile.repository.trim() || !(password || profile.passwordFile.trim())} onClick={() => void refresh()}>{connected ? "Refresh repository" : "Connect"}</button>
                     {repositoryMissing && <button onClick={async () => {
@@ -471,12 +473,13 @@ function App() {
                 </section>}
             </>}
             {(tab === "Backup" || tab === "Logs") && <SchedulePanel key={profile.id} profile={profile} busy={!!busy} beforeSave={flushScheduleProfiles} showLogs={tab === "Logs"} openLogs={() => navigate("Logs")} />}
+            <footer>rbackup · Backup Manager for Restic <span>Local control · Encrypted storage · Verified recovery</span></footer>
+            </div>
             {browserOpen && chosen && <SnapshotBrowser key={`${active}:${chosen.id}:${mounted?.snapshot === chosen.id && mounted.repository === profile.repository ? mounted.path : "repository"}`} snapshot={chosen}
                 loadDirectory={loadDirectory} busy={!!busy} mountBusy={mountBusy}
                 mountError={mountError} unmount={mounted ? () => void mountAction("stop") : undefined} cancel={cancelOperation} cancelling={cancelling} mountedPath={mounted?.snapshot === chosen.id && mounted.repository === profile.repository ? mounted.path : undefined} mount={() => void mountAction("start", chosen.id)}
                 restore={async (restorePaths, destination) => !!await run("restore", { snapshot: chosen.id, target: destination, restorePaths }, true)}
                 close={() => { if (listing) void invoke("cancel_restic").catch(() => { }); setBrowserOpen(false); }} />}
-            <footer>rbackup · Backup Manager for Restic <span>Local control · Encrypted storage · Verified recovery</span></footer>
         </main>
     </div>;
 }

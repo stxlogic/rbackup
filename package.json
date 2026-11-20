@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "node --test tests/*.test.ts",
+    "test:desktop": "node --test tests/desktop-smoke.mjs",
     "test:restore": "node tests/treeSelection.test.ts && cargo test --manifest-path src-tauri/Cargo.toml real_restic_restore_selected_paths_from_snapshot --lib -- --ignored --test-threads=1",
     "build:deb": "tauri build --bundles deb",
     "preview": "vite preview",

@@ -75,6 +75,8 @@ To check an installed build, open rbackup from Finder, select **Check restic ver
 
 The [macOS GitHub Actions workflow](.github/workflows/macos.yml) runs tests and builds unsigned debug app bundles and disk images on Intel for pushes and pull requests. For an Apple Silicon check, select **Run on Apple Silicon** when starting the workflow manually. Public DMGs require Developer ID signing and notarization. See [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/).
 
+The separate [macOS Apple Silicon test](.github/workflows/apple-silicon.yml) workflow can also be run manually to check app startup on an Apple Silicon runner.
+
 ## Draft GitHub releases
 
 Push a version tag such as `rbackup-0.1.2` or `v0.1.2` that matches the version in the tagged commit. In GitHub, open **Actions → Draft desktop release → Run workflow** and enter that tag. The [release workflow](.github/workflows/release.yml) builds a Linux Debian package, a Windows NSIS installer, and an unsigned universal macOS DMG. After all three builds succeed, it attaches the installers to a draft GitHub Release with generated notes. Review the draft before publishing and sign and notarize the macOS bundle for public distribution.

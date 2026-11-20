@@ -1,0 +1,139 @@
+name: macOS Apple Silicon test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  silicon:
+    name: Apple Silicon build and startup test
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    env:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: "1"
+      CARGO_TARGET_DIR: ${{ github.workspace }}/src-tauri/target
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Verify Apple Silicon runner
+        run: |
+          set -euo pipefail
+          sw_vers
+          uname -m
+
+          if [[ "$(uname -m)" != "arm64" ]]; then
+            echo "::error::Expected an Apple Silicon runner"
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Check Rust toolchain
+        run: |
+          rustc --version
+          cargo --version
+          rustup target add aarch64-apple-darwin
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run JavaScript tests
+        run: npm test
+
+      - name: Install restic
+        run: |
+          brew install restic
+          restic version
+
+      - name: Run Rust tests on Apple Silicon
+        run: |
+          cargo test \
+            --locked \
+            --manifest-path src-tauri/Cargo.toml \
+            --target aarch64-apple-darwin
+
+      - name: Build Apple Silicon app and DMG
+        run: |
+          npm run tauri -- build \
+            --debug \
+            --target aarch64-apple-darwin \
+            --bundles app,dmg \
+            --no-sign \
+            -- --locked
+
+      - name: Smoke-test app startup
+        run: |
+          set -euo pipefail
+          mkdir -p test-results
+
+          BUNDLE_DIR="$CARGO_TARGET_DIR/aarch64-apple-darwin/debug/bundle"
+
+          APP="$(find "$BUNDLE_DIR/macos" \
+            -maxdepth 1 -type d -name '*.app' -print -quit)"
+
+          if [[ -z "$APP" ]]; then
+            echo "::error::No .app bundle found"
+            exit 1
+          fi
+
+          EXECUTABLE=$(/usr/libexec/PlistBuddy \
+            -c 'Print :CFBundleExecutable' \
+            "$APP/Contents/Info.plist")
+
+          BINARY="$APP/Contents/MacOS/$EXECUTABLE"
+
+          echo "Launching: $BINARY"
+          file "$BINARY" | tee test-results/binary-info.txt
+
+          "$BINARY" > test-results/macos-startup.log 2>&1 &
+          APP_PID=$!
+
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for SECOND in {1..15}; do
+            sleep 1
+
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              STATUS=0
+              wait "$APP_PID" || STATUS=$?
+
+              cat test-results/macos-startup.log
+              echo "::error::App exited during startup (exit code $STATUS)"
+              exit 1
+            fi
+          done
+
+          echo "App process remained running for 15 seconds."
+          cat test-results/macos-startup.log
+
+      - name: Upload Apple Silicon DMG
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-apple-silicon-debug-dmg
+          path: src-tauri/target/aarch64-apple-darwin/debug/bundle/dmg/*.dmg
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload startup logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-apple-silicon-startup-logs
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

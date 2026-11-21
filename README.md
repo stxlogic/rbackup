@@ -79,7 +79,7 @@ The separate [macOS Apple Silicon test](.github/workflows/apple-silicon.yml) wor
 
 ## Draft GitHub releases
 
-Push a version tag such as `rbackup-0.1.2` or `v0.1.2` that matches the version in the tagged commit. In GitHub, open **Actions → Draft desktop release → Run workflow** and enter that tag. The [release workflow](.github/workflows/release.yml) builds a Linux Debian package, a Windows NSIS installer, and an unsigned universal macOS DMG. After all three builds succeed, it attaches the installers to a draft GitHub Release with generated notes. Review the draft before publishing and sign and notarize the macOS bundle for public distribution.
+Push a version tag such as `rbackup-0.1.2` or `v0.1.2` that matches the version in the tagged commit. In GitHub, open **Actions → Draft desktop release → Run workflow** and enter that tag. The [release workflow](.github/workflows/release.yml) builds Linux DEB and RPM packages, Windows NSIS and MSI installers, and an unsigned universal macOS DMG. After all builds succeed, it attaches the installers to a draft GitHub Release with generated notes. Review the draft before publishing and sign and notarize the macOS bundle for public distribution.
 
 ## Workflow
 
